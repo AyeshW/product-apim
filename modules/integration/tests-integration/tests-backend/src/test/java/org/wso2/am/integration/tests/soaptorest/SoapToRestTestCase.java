@@ -251,6 +251,23 @@ public class SoapToRestTestCase extends APIMIntegrationBaseTest {
                 "Response code is not as expected");
     }
 
+    @Test(groups = {"wso2.am"}, description = "Validate the generated swagger definition")
+    public void testVerifySwagger() throws Exception {
+        String swaggerDefinition = IOUtils.toString(
+                getClass().getClassLoader().getResourceAsStream("soap" + File.separator + "swagger.yaml"),
+                "UTF-8");
+
+//        ApiResponse<String> apiResponse = apIsApi.getAPISwaggerWithHttpInfo(soapToRestAPIId, null);
+//
+//        // validate getting swagger
+//        assertEquals(apiResponse.getStatusCode(), HttpStatus.SC_OK, "Getting API swagger failed");
+        String swaggerResponse = apIsApi.getAPISwagger(soapToRestAPIId, null);
+
+        // validate swagger definition
+        //assertEquals(apiResponse.getData(), swaggerDefinition, "Invalid swagger definition");
+        assertEquals(swaggerResponse, swaggerDefinition, "Invalid swagger definition");
+    }
+
     @Test(groups = {"wso2.am"}, description = "API invocation using JWT App")
     public void testInvokeSoapToRestAPIUsingJWTApplication() throws Exception {
         String graphqlJwtAppName = "PhoneVerificationJWTAPP";
