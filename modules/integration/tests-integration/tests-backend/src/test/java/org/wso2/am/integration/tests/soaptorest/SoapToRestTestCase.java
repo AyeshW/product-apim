@@ -225,6 +225,31 @@ public class SoapToRestTestCase extends APIMIntegrationBaseTest {
                 "Response code is not as expected");
     }
 
+    @Test(groups = {"wso2.am"}, description = "Invocation of revisioned and deployed API",
+    dependsOnMethods = {"testDefaultAPIInvocation"})
+    public void testRevisionedAPIInvocation() throws Exception {
+        String revisionUUID = createAPIRevisionAndDeployUsingRest(soapToRestAPIId, restAPIPublisher);
+
+        String soapToRestAppName = "PhoneVerificationAPP";
+        String testAppId = createSoapToRestAppAndSubscribeToAPI(soapToRestAppName, "OAUTH");
+
+        // Generate token
+        ArrayList<String> grantTypes = new ArrayList<>();
+        grantTypes.add(APIMIntegrationConstants.GRANT_TYPE.CLIENT_CREDENTIAL);
+        ApplicationKeyDTO applicationKeyDTO = restAPIStore.generateKeys(testAppId, "36000", "",
+                ApplicationKeyGenerateRequestDTO.KeyTypeEnum.PRODUCTION, null, grantTypes);
+
+        String accessToken = applicationKeyDTO.getToken().getAccessToken();
+        String invokeURL = getAPIInvocationURLHttp(API_CONTEXT, API_VERSION_1_0_0) + resourceName;
+
+        Map<String, String> requestHeaders = new HashMap<String, String>();
+        requestHeaders.put(APIMIntegrationConstants.AUTHORIZATION_HEADER, "Bearer " + accessToken);
+        requestHeaders.put("Content-Type",  "application/json");
+        HttpResponse serviceResponse = HTTPSClientUtils.doPost(invokeURL, requestHeaders, payload);
+
+        Assert.assertEquals(serviceResponse.getResponseCode(), HttpStatus.SC_OK,
+                "Response code is not as expected");
+    }
 
     @Test(groups = {"wso2.am"}, description = "API invocation using JWT App")
     public void testInvokeSoapToRestAPIUsingJWTApplication() throws Exception {
