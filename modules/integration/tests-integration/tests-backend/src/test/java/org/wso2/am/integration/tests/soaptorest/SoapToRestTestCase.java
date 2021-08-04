@@ -25,6 +25,7 @@ import org.apache.commons.httpclient.HttpStatus;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.json.HTTP;
 import org.json.JSONObject;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
@@ -32,10 +33,9 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
-import org.wso2.am.integration.clients.publisher.api.v1.dto.APIDTO;
-import org.wso2.am.integration.clients.publisher.api.v1.dto.APIOperationsDTO;
-import org.wso2.am.integration.clients.publisher.api.v1.dto.APIScopeDTO;
-import org.wso2.am.integration.clients.publisher.api.v1.dto.ScopeDTO;
+import org.wso2.am.integration.clients.publisher.api.ApiResponse;
+import org.wso2.am.integration.clients.publisher.api.v1.ApIsApi;
+import org.wso2.am.integration.clients.publisher.api.v1.dto.*;
 import org.wso2.am.integration.clients.store.api.ApiException;
 import org.wso2.am.integration.clients.store.api.v1.dto.ApplicationDTO;
 import org.wso2.am.integration.clients.store.api.v1.dto.ApplicationKeyDTO;
@@ -61,11 +61,13 @@ import java.util.List;
 import java.util.Map;
 
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertEqualsNoOrder;
 
 @SetEnvironment(executionEnvironments = { ExecutionEnvironment.ALL })
 public class SoapToRestTestCase extends APIMIntegrationBaseTest {
     private static final Log log = LogFactory.getLog(SoapToRestTestCase.class);
 
+    private final ApIsApi apIsApi= new ApIsApi();
     private final String SOAPTOREST_API_NAME = "PhoneVerification";
     private final String API_CONTEXT = "phoneverify";
     private final String API_VERSION_1_0_0 = "1.0";
@@ -99,7 +101,8 @@ public class SoapToRestTestCase extends APIMIntegrationBaseTest {
                 "UTF-8");
 
         File file = getTempFileWithContent(wsdlDefinition);
-        restAPIPublisher.validateWsdlDefinition(null, file);
+//        restAPIPublisher.validateWsdlDefinition(null, file);
+        restAPIPublisher.validateWsdlDefinition("http://ws.cdyne.com/phoneverify/phoneverify.asmx?wsdl", null);
 
         ArrayList<String> environment = new ArrayList<String>();
         environment.add(Constants.GATEWAY_ENVIRONMENT);
@@ -122,12 +125,15 @@ public class SoapToRestTestCase extends APIMIntegrationBaseTest {
         endpointConfig.put("production_endpoints", endpointObject);
 
         additionalPropertiesObj.put("endpointConfig", endpointConfig);
-        additionalPropertiesObj.put("gatewayEnvironments", environment);
+        // Do not set the environments here
+        //additionalPropertiesObj.put("gatewayEnvironments", environment);
         additionalPropertiesObj.put("policies", policies);
 
         // Create SOAPTOREST API
+//        APIDTO apidto = restAPIPublisher
+//                .importWSDLDefinition(file, null, additionalPropertiesObj.toString(), "SOAPTOREST");
         APIDTO apidto = restAPIPublisher
-                .importWSDLDefinition(file, null, additionalPropertiesObj.toString(), "SOAPTOREST");
+                .importWSDLDefinition(null, "http://ws.cdyne.com/phoneverify/phoneverify.asmx?wsdl", additionalPropertiesObj.toString(), "SOAPTOREST");
         soapToRestAPIId = apidto.getId();
         HttpResponse createdApiResponse = restAPIPublisher.getAPI(soapToRestAPIId);
         assertEquals(Response.Status.OK.getStatusCode(), createdApiResponse.getResponseCode(),
@@ -140,6 +146,59 @@ public class SoapToRestTestCase extends APIMIntegrationBaseTest {
                 APIMIntegrationConstants.IS_API_EXISTS);
     }
 
+
+    @Test(groups = {"wso2.com"}, description = "Created API resources validation test case")
+    public void testCreatedResources() throws Exception {
+        // testing for the PhoneVerificationAPI
+        String resource1 = "/checkPhoneNumbers";
+        String resource2 = "/checkPhoneNumber";
+        String[] expectedResources = {resource1, resource2};
+
+        HttpResponse response = restAPIPublisher.getAPI(soapToRestAPIId);
+        Gson g = new Gson();
+        APIDTO apidto = g.fromJson(response.getData(), APIDTO.class);
+        List<APIOperationsDTO> operations = apidto.getOperations();
+        String[] actualResources = new String[operations.size()];
+
+        int index;
+        for (index = 0; index < operations.size(); index++) {
+            String resource = operations.get(index).getTarget();
+            actualResources[index] = resource;
+        }
+
+        // Check the number of resources
+        assertEquals(actualResources.length, expectedResources.length, "Unexpected number of resources in the created API");
+
+        // Check all resources validity
+        assertEqualsNoOrder(actualResources, expectedResources, "Invalid set of resources");
+    }
+
+//    @Test(groups = "wso2.am", description = "In/Out sequence validation test case")
+//    public void testInOutSequence() throws Exception {
+//        // Validate in-sequence
+//        String inSequence = IOUtils.toString(
+//                getClass().getClassLoader().getResourceAsStream("soap" + File.separator + "in-sequence-check-phone-numbers.txt"),
+//                "UTF-8");
+//        ResourcePolicyListDTO resourcePolicyInListDTO = restAPIPublisher.getApiResourcePolicies(soapToRestAPIId, "in");
+//        List<ResourcePolicyInfoDTO> resourcePoliciesIn = resourcePolicyInListDTO.getList();
+//        resourcePoliciesIn.forEach((item) ->
+//            {
+//                System.out.println(item.getContent());
+//                assertEquals(item.getContent(), inSequence, "Invalid In-Sequence");
+//            });
+//
+//        // Validate out-sequence
+//        String outSequence = IOUtils.toString(
+//                getClass().getClassLoader().getResourceAsStream("soap" + File.separator + "out-sequence-check-phone-numbers.txt"),
+//                "UTF-8");
+//        ResourcePolicyListDTO resourcePolicyOutListDTO = restAPIPublisher.getApiResourcePolicies(soapToRestAPIId, "out");
+//        List<ResourcePolicyInfoDTO> resourcePoliciesOut = resourcePolicyOutListDTO.getList();
+//        resourcePoliciesOut.forEach((item) ->
+//        {
+//            System.out.println(item.getContent());
+//            assertEquals(item.getContent(), outSequence, "Invalid Out-Sequence");
+//        });
+//    }
 
     @Test(groups = {"wso2.am"}, description = "API invocation using JWT App")
     public void testInvokeSoapToRestAPIUsingJWTApplication() throws Exception {
@@ -328,9 +387,9 @@ public class SoapToRestTestCase extends APIMIntegrationBaseTest {
         ApplicationDTO applicationDTO = restAPIStore.addApplicationWithTokenType(appName,
                 APIMIntegrationConstants.APPLICATION_TIER.UNLIMITED, "",
                 "test app for SOAPTOREST API", tokenType);
-        String testApiId = applicationDTO.getApplicationId();
-        restAPIStore.subscribeToAPI(soapToRestAPIId, testApiId, APIMIntegrationConstants.API_TIER.UNLIMITED);
-        return testApiId;
+        String testAppId = applicationDTO.getApplicationId();
+        restAPIStore.subscribeToAPI(soapToRestAPIId, testAppId, APIMIntegrationConstants.API_TIER.UNLIMITED);
+        return testAppId;
     }
 
     private File getTempFileWithContent(String schema) throws Exception {
@@ -352,13 +411,13 @@ public class SoapToRestTestCase extends APIMIntegrationBaseTest {
 
     @AfterClass(alwaysRun = true)
     public void cleanUpArtifacts() throws Exception {
-        userManagementClient.deleteRole(SOAPTOREST_ROLE);
-        userManagementClient.deleteUser(SOAPTOREST_TEST_USER);
-        restAPIStore.deleteApplication(testAppId1);
-        restAPIStore.deleteApplication(testAppId2);
-        restAPIStore.deleteApplication(testAppId3);
-        undeployAndDeleteAPIRevisionsUsingRest(soapToRestAPIId, restAPIPublisher);
-        restAPIPublisher.deleteAPI(soapToRestAPIId);
+//        userManagementClient.deleteRole(SOAPTOREST_ROLE);
+//        userManagementClient.deleteUser(SOAPTOREST_TEST_USER);
+//        restAPIStore.deleteApplication(testAppId1);
+//        restAPIStore.deleteApplication(testAppId2);
+//        restAPIStore.deleteApplication(testAppId3);
+//        undeployAndDeleteAPIRevisionsUsingRest(soapToRestAPIId, restAPIPublisher);
+//        restAPIPublisher.deleteAPI(soapToRestAPIId);
         super.cleanUp();
     }
 }

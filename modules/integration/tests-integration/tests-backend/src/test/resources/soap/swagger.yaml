@@ -1,0 +1,206 @@
+swagger: '2.0'
+info:
+  version: 1.0.0
+  title: PhoneVerify
+security:
+  - default: []
+paths:
+  /checkPhoneNumber:
+    post:
+      operationId: CheckPhoneNumber
+      parameters:
+        - in: body
+          name: Payload
+          required: true
+          schema:
+            $ref: '#/definitions/checkPhoneNumberInput'
+      responses:
+        default:
+          description: ''
+          schema:
+            $ref: '#/definitions/checkPhoneNumberOutput'
+      security:
+        - default: []
+      x-wso2-soap:
+        x-soap-style: document
+        soap-action: 'http://ws.cdyne.com/PhoneVerify/query/CheckPhoneNumber'
+        x-soap-message-type: document
+        soap-operation: CheckPhoneNumber
+        namespace: 'http://ws.cdyne.com/PhoneVerify/query'
+        x-soap-version: '1.2'
+      x-auth-type: Application & Application User
+      x-throttling-tier: Unlimited
+      x-wso2-application-security:
+        security-types:
+          - oauth2
+        optional: false
+  /checkPhoneNumbers:
+    post:
+      operationId: CheckPhoneNumbers
+      parameters:
+        - in: body
+          name: Payload
+          required: true
+          schema:
+            $ref: '#/definitions/checkPhoneNumbersInput'
+      responses:
+        default:
+          description: ''
+          schema:
+            $ref: '#/definitions/checkPhoneNumbersOutput'
+      security:
+        - default: []
+      x-wso2-soap:
+        x-soap-style: document
+        soap-action: 'http://ws.cdyne.com/PhoneVerify/query/CheckPhoneNumbers'
+        x-soap-message-type: document
+        soap-operation: CheckPhoneNumbers
+        namespace: 'http://ws.cdyne.com/PhoneVerify/query'
+        x-soap-version: '1.2'
+      x-auth-type: Application & Application User
+      x-throttling-tier: Unlimited
+      x-wso2-application-security:
+        security-types:
+          - oauth2
+        optional: false
+securityDefinitions:
+  default:
+    type: oauth2
+    authorizationUrl: 'https://test.com'
+    flow: implicit
+definitions:
+  checkPhoneNumberInput:
+    type: object
+    properties:
+      CheckPhoneNumber:
+        $ref: '#/definitions/CheckPhoneNumber'
+  checkPhoneNumberOutput:
+    type: object
+    properties:
+      CheckPhoneNumberResponse:
+        $ref: '#/definitions/CheckPhoneNumberResponse'
+  checkPhoneNumbersInput:
+    type: object
+    properties:
+      CheckPhoneNumbers:
+        $ref: '#/definitions/CheckPhoneNumbers'
+  checkPhoneNumbersOutput:
+    type: object
+    properties:
+      CheckPhoneNumbersResponse:
+        $ref: '#/definitions/CheckPhoneNumbersResponse'
+  StringArray:
+    type: string
+    properties:
+      String:
+        type: array
+        items:
+          type: string
+    xml:
+      namespace: 'http://www.w3.org/2001/XMLSchema'
+      prefix: s
+    x-namespace-qualified: false
+  CheckPhoneNumber:
+    type: object
+    properties:
+      PhoneNumber:
+        type: string
+      LicenseKey:
+        type: string
+    xml:
+      namespace: 'http://www.w3.org/2001/XMLSchema'
+      prefix: s
+    x-namespace-qualified: true
+  CheckPhoneNumbersResponse:
+    type: object
+    properties:
+      CheckPhoneNumbersResult:
+        $ref: '#/definitions/ArrayOfPhoneReturn'
+    xml:
+      namespace: 'http://www.w3.org/2001/XMLSchema'
+      prefix: s
+    x-namespace-qualified: true
+  ArrayOfString:
+    type: object
+    properties:
+      string:
+        type: array
+        items:
+          type: string
+    xml:
+      namespace: 'http://www.w3.org/2001/XMLSchema'
+      prefix: s
+    x-namespace-qualified: true
+  ArrayOfPhoneReturn:
+    type: object
+    properties:
+      ArrayOfPhoneReturn:
+        $ref: '#/definitions/ArrayOfPhoneReturn'
+    xml:
+      namespace: 'http://www.w3.org/2001/XMLSchema'
+      prefix: s
+    x-namespace-qualified: true
+  CheckPhoneNumbers:
+    type: object
+    properties:
+      PhoneNumbers:
+        $ref: '#/definitions/ArrayOfString'
+      LicenseKey:
+        type: string
+    xml:
+      namespace: 'http://www.w3.org/2001/XMLSchema'
+      prefix: s
+    x-namespace-qualified: true
+  PhoneReturn:
+    type: object
+    properties:
+      PhoneReturn:
+        $ref: '#/definitions/PhoneReturn'
+    xml:
+      namespace: 'http://www.w3.org/2001/XMLSchema'
+      prefix: s
+    x-namespace-qualified: true
+  CheckPhoneNumberResponse:
+    type: object
+    properties:
+      CheckPhoneNumberResult:
+        $ref: '#/definitions/PhoneReturn'
+    xml:
+      namespace: 'http://www.w3.org/2001/XMLSchema'
+      prefix: s
+    x-namespace-qualified: true
+x-wso2-auth-header: Authorization
+x-wso2-cors:
+  corsConfigurationEnabled: false
+  accessControlAllowOrigins:
+    - '*'
+  accessControlAllowCredentials: false
+  accessControlAllowHeaders:
+    - authorization
+    - Access-Control-Allow-Origin
+    - Content-Type
+    - SOAPAction
+    - apikey
+    - Internal-Key
+  accessControlAllowMethods:
+    - GET
+    - PUT
+    - POST
+    - DELETE
+    - PATCH
+    - OPTIONS
+x-wso2-production-endpoints:
+  urls:
+    - 'http://ws.cdyne.com/phoneverify/phoneverify.asmx'
+  type: address
+x-wso2-basePath: /phoneverify/1.0.0
+x-wso2-transports:
+  - http
+  - https
+x-wso2-application-security:
+  security-types:
+    - oauth2
+  optional: false
+x-wso2-response-cache:
+  enabled: false
+  cacheTimeoutInSeconds: 300
